@@ -9,6 +9,7 @@ import time
 import requests
 import logging
 import psycopg2
+import pprint
 
 
 def get_Redshift_connection():
@@ -21,7 +22,7 @@ def extract(**context):
     base_url = context["params"]["base_url"]
     lat = context["params"]["lat"]
     lon = context["params"]["lon"]
-    part = context["part"]["part"]
+    part = context["params"]["part"]
     api_key = context["params"]["api_key"]
 
     task_instance = context['task_instance']
@@ -72,7 +73,7 @@ def load(**context):
         if line != "":
             (date, temp, min_temp, max_temp) = line.split(",")
             logging.info(f"{date} - {temp} - {min_temp} - {max_temp}")
-            sql += f"""INSERT INTO {schema}.{table} VALUES ('{date}', '{temp}', '{min_temp}' , '{max_temp}', 'default');"""
+            sql += f"""INSERT INTO {schema}.{table} VALUES ('{date}', '{temp}', '{min_temp}' , '{max_temp}', default);"""
     sql += "END;"
     logging.info(sql)
     cur.execute(sql)
@@ -115,9 +116,9 @@ load = PythonOperator(
     task_id='load',
     python_callable=load,
     params={
-        'schema': Variable.get("owa_schema"),
-        'table': Variable.get("owa_table"),
-        'ddl' : Variable.get("owa_ddl")
+        'owa_schema': Variable.get("owa_schema"),
+        'owa_table': Variable.get("owa_table"),
+        'owa_ddl' : Variable.get("owa_ddl")
     },
     provide_context=True,
     dag=dag_open_weather_api)
