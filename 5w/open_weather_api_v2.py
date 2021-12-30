@@ -148,7 +148,7 @@ extract = PythonOperator(
         'api_key': Variable.get("api_key")
     },
     provide_context=True,
-    dag=dag_open_weather_api)
+    dag=dag_open_weather_api_v2)
 
 transform = PythonOperator(
     task_id='transform',
@@ -156,7 +156,7 @@ transform = PythonOperator(
     params={
     },
     provide_context=True,
-    dag=dag_open_weather_api)
+    dag=dag_open_weather_api_v2)
 
 load = PythonOperator(
     task_id='load',
@@ -166,7 +166,7 @@ load = PythonOperator(
         'owa_table': Variable.get("owa_table")
     },
     provide_context=True,
-    dag=dag_open_weather_api)
+    dag=dag_open_weather_api_v2)
 
 extract >> transform >> load
 
