@@ -125,8 +125,8 @@ def try_execute_commit(cur, sql):
 
 
 
-dag_open_weather_api = DAG(
-    dag_id='dag_open_weather_api',
+dag_open_weather_api_v2 = DAG(
+    dag_id='dag_open_weather_api_v2',
     start_date=datetime(2021, 12, 1),  # 날짜가 미래인 경우 실행이 안됨
     schedule_interval='1 * * * *',  # 적당히 조절
     max_active_runs=1,
