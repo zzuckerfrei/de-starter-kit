@@ -139,7 +139,7 @@ api_key, ********(open_weather_api key)
 base_url, https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={part}&appid={api_key}&units=metric
 lat, 37.5683
 lon, 126.9778
-owa_ddl, CREATE TABLE IF NOT EXISTS seonmin1219.weather_forecast ( date date primary key, temp float, min_temp float, max_temp float, created_at timestamp default sysdate );
+owa_ddl, CREATE TABLE IF NOT EXISTS seonmin1219.weather_forecast ( date date primary key, temp float, min_temp float, max_temp float, created_at timestamp default GETDATE() );
 owa_schema, seonmin1219
 owa_table, weather_forecast
 part, current,minutely,hourly,alerts
