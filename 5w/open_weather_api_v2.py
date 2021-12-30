@@ -62,21 +62,58 @@ def transform(**context):
 def load(**context):
     schema = context["params"]["owa_schema"]
     table = context["params"]["owa_table"]
-    ddl = context["params"]["owa_ddl"]
 
     cur = get_Redshift_connection()
     lines = context["task_instance"].xcom_pull(key="return_value", task_ids="transform")
     lines = iter(lines)
     next(lines)
-    sql = "BEGIN; DELETE FROM {schema}.{table}; {ddl};".format(schema=schema, table=table, ddl=ddl)
+
+    ### create temp table
+    sql_create = """
+    DROP TABLE IF EXISTS {schema}.temp_{table};
+    
+    CREATE TABLE {schema}.temp_{table} (LIKE {schema}.{table} INCLUDING DEFAULTS);
+    
+    INSERT INTO {schema}.temp_{table} 
+         SELECT * FROM {schema}.{table};
+    """.format(schema=schema, table=table)
+    logging.info(sql_create)
+
+    try_execute_commit(cur, sql_create)
+
+
+    ### insert temp table
+    sql_insert = "BEGIN;"
     for line in lines:
         if line != "":
             (date, temp, min_temp, max_temp) = line.split(",")
             logging.info(f"{date} - {temp} - {min_temp} - {max_temp}")
-            sql += f"""INSERT INTO {schema}.{table} VALUES ('{date}', '{temp}', '{min_temp}' , '{max_temp}', default);"""
-    sql += "END;"
-    logging.info(sql)
+            sql_insert += f"""INSERT INTO {schema}.temp_{table} VALUES ('{date}', '{temp}', '{min_temp}' , '{max_temp}', default);"""
+    sql_insert += "END;"
 
+    logging.info(sql_insert)
+
+    try_execute_commit(cur, sql_insert)
+
+
+    ### replace orginal with temp
+    alter_sql = """
+     DELETE FROM {schema}.{table};
+     
+     INSERT INTO {schema}.{table}
+     SELECT date, temp, min_temp, max_temp 
+       FROM (
+             SELECT *, 
+                    ROW_NUMBER() OVER (PARTITION BY date ORDER BY created_at DESC) seq
+               FROM {schema}.temp_{table}
+            )
+      WHERE seq = 1;
+      """.format(schema=schema, table=table)
+    logging.info(alter_sql)
+    try_execute_commit(cur, alter_sql)
+
+
+def try_execute_commit(cur, sql):
     try:
         cur.execute(sql)
         cur.execute("COMMIT;") # autocommit=False
@@ -84,6 +121,7 @@ def load(**context):
     except Exception as e:
         cur.execute("ROLLBACK;")
         raise # 에러 발생 알림
+
 
 
 
@@ -125,8 +163,7 @@ load = PythonOperator(
     python_callable=load,
     params={
         'owa_schema': Variable.get("owa_schema"),
-        'owa_table': Variable.get("owa_table"),
-        'owa_ddl' : Variable.get("owa_ddl")
+        'owa_table': Variable.get("owa_table")
     },
     provide_context=True,
     dag=dag_open_weather_api)
