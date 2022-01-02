@@ -25,7 +25,6 @@ def execSQL(**context):
     table = context['params']['table']
     src_table = context['params']['src_table']
     select_sql = context['params']['sql']
-    ddl = context['params']['ddl']
 
     logging.info(schema)
     logging.info(table)
@@ -80,8 +79,9 @@ def execSQL(**context):
         
         """
         sql += "COMMIT;"
-        logging.info(sql)
         cur.execute(sql)
+        logging.info(sql)
+        logging.info("success")
     except Exception as e:
         cur.execute("ROLLBACK")
         logging.error('Failed to sql. Completed ROLLBACK!')
@@ -105,7 +105,7 @@ execsql = PythonOperator(
 
         'sql' : """
                 SELECT *
-                  FROM {schema}.{src_table}
+                  FROM seonmin1219.nps
                 """
     },
     provide_context = True,
