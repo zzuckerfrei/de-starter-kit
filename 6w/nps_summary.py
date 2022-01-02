@@ -52,7 +52,7 @@ def execSQL(**context):
                         NEGATIVE REAL,
                         NPS INT
                   );
-              """.format(schema=schema, table=table, src_table=src_table)
+              """
         sql += """
         INSERT INTO {schema}.{table} 
         SELECT (
@@ -76,9 +76,10 @@ def execSQL(**context):
                )  AS NEGATIVE
                ,
                POSITIVE - NEGATIVE AS NPS
-        
+        ;
         """
         sql += "COMMIT;"
+        sql.format(schema=schema, table=table, src_table=src_table)
         cur.execute(sql)
         logging.info(sql)
         logging.info("success")
