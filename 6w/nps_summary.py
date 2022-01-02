@@ -47,7 +47,7 @@ def execSQL(**context):
     try:
         sql = """
                   DROP TABLE IF EXISTS {schema}.{table};
-                  CRATE TABLE {schema}.{table} (
+                  CREATE TABLE {schema}.{table} (
                         POSITIVE REAL,
                         NEGATIVE REAL,
                         NPS INT
